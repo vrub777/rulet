@@ -1,0 +1,36 @@
+{{define "fileUpload"}}
+	<link rel="stylesheet" href="{{.UrlCss}}/multiupload.css" type="text/css" media="screen" />
+	<script src="{{.UrlJs}}/uploadImgs.js" type="text/javascript" charset="utf-8"></script>
+	
+	<h1>Загрузите изображение</h1>
+	<div class="errors">
+		<ul id="upload-list-errors"></ul>
+	</div>
+	<div class="upload-block">
+		<div class="upload-continer">
+			<div id="domain-list-images" class="image-list">
+				<ul id="list-images"></ul>
+			</div>
+			<div class="buttons-line">
+				<div class="file-upload">
+					<button type="button">Выбрать фото</button>
+		        	<div></div>
+			        <input id="file-input" type="file" name="files" required multiple />
+				</div>
+			</div>
+		</div>
+		<div class="description-upload">
+			<div class="upload-data">
+				<p>
+					Число загружаемых файлов: <span id="countImgsUpload"></span>
+				</p>
+				<p>
+					Формат загружаемых изображений: jpg, gif, bmp, png
+				</p>
+				<p>
+					Максимальный размер загружаемого файла: <span id="sizeImgUploadInMb"></span> Mb 
+				</p>
+			</div>
+		</div>
+	</div>
+{{end}}

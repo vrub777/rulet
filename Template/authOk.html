@@ -1,0 +1,16 @@
+{{define "authOk"}}
+		<div>
+			<ul>
+				{{range .BasePage.Errors}}
+		            <li> {{.}} </li>
+		        {{end}}
+			</ul>
+		</div>
+        <div>
+			1 - {{.UserModel.Id}} - Вы вошли как, {{.Name}}
+		</div>
+		 <form action="authOut" method="post">
+            <input type="submit" name="button" value="Выйти" />
+        </form>	
+	{{template "footer"}}
+{{end}}

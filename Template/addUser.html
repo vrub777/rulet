@@ -1,0 +1,51 @@
+{{define "addUser"}}
+	 <!DOCTYPE html>
+		<html>
+		    <head>
+		        <meta charset="utf-8">
+		        <title>{{.HeaderPage.Title}}</title>
+		    </head>     
+	    <body>
+		<div>
+			<h1>
+				{{if .UserAdd.IsAddUser}}
+					Добавить пользователя
+				{{else}}
+					Редактировать пользователя
+				{{end}}
+			</h1>
+		</div>
+		<div>
+			<ul>
+				{{range .Errors}}
+		            <li> {{.}} </li>
+		        {{end}}
+			</ul>
+		</div>
+		<div>
+			<a href="/listusers">Назад к списку пользователей</a>
+		</div>
+		<div>
+	        <form action="{{.UserAdd.NameAction}}" method="post">
+				<div class="name-field">Имя</div>
+	            <input type="text" name="name" value="{{.UserAdd.Name}}" /><br />
+				<div class="name-field">Почта</div>
+	            <input type="text" name="email" value="{{.UserAdd.Email}}" /><br />
+				<div class="name-field">Пароль</div>
+				<input type="text" name="password"  value="{{.UserAdd.Password}}"/><br />
+				<div class="name-field">Роль</div>
+				<div class="container-check-list">
+					{{range $Roles := .UserRoles}}
+						{{if $Roles.IsCheck}}
+							<input name="role-{{.Id}}" type="checkbox"  value="{{$Roles.Id}}" checked/>{{.Name}}
+						{{else}}
+							<input name="role-{{.Id}}" type="checkbox"  value="{{$Roles.Id}}" />{{.Name}}
+						{{end}}
+					{{end}}
+				</div>
+				<input type="hidden" name="id" value="{{.UserAdd.Id}}" />
+	            <input type="submit" name="button" value="{{.UserAdd.NameOkButton}}" />
+	        </form>	
+		</div>
+	{{template "footer"}}
+{{end}}

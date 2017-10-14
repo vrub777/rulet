@@ -1,0 +1,21 @@
+{{define "auth"}}
+		<div>
+			<h1>Авторизация</h1>
+		</div>
+		<div>
+		<ul>
+			{{range .BasePage.Errors}}
+	            <li> {{.}} </li>
+	        {{end}}
+		</ul>
+		</div>
+		<div>
+	        <form action="auth" method="post">
+				<input type="hidden" name="backURL" value="{{.BackURL}}" />
+	            <input type="text" name="name" id="name" /><br />
+				<input type="password" name="password" /><br />
+	            <input type="submit" name="button" value="Войти" />
+	        </form>	
+		</div>
+	{{template "footer"}}
+{{end}}

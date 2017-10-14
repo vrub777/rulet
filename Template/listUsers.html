@@ -1,0 +1,92 @@
+{{define "listUsers"}}
+	<script type="text/javascript" src="http://localhost:8091/js/jquery-3.0.0.min.js"></script>
+		<div>
+			{{.Title}}
+		</div>
+		<div>
+			<a href="/addUser">Добавить пользователя</a>
+		</div>
+		<table>
+		<th>
+			Имя
+		</th>
+		<th>
+			Статус
+		</th>
+		<th>
+			Действие
+		</th>
+        {{range .Users}}
+			<tr>
+			<td>
+				<a href="/editUser/{{.Id}}">{{.Name}}</a>&nbsp;
+			</td>
+			<td id="status-activity-{{.Id}}">
+				{{if .IsLocked}}
+					Блокирован
+				{{else}}
+					Активен
+				{{end}}
+			</td>
+			<td id="action-activity-{{.Id}}">
+				{{if .IsLocked}}
+				<input id="action-block-unlock-{{.Id}}" class="action-button-unlock" type="button" value="Разблокировать" />
+				<input id="action-block-{{.Id}}" style="display:none;" class="action-button" type="button" value="Заблокировать" />
+				{{else}}
+				<input id="action-block-{{.Id}}" class="action-button" type="button" value="Заблокировать" />
+				<input id="action-block-unlock-{{.Id}}" style="display:none;" class="action-button-unlock" type="button" value="Разблокировать" />
+				{{end}}
+			</td>
+			<td>
+				<a href="/editUser/{{.Id}}">Редактировать пользователя</a>
+			</td>
+			</tr>
+		{{end}}
+		</table>
+	{{template "footer"}}
+	<script>
+		$(".action-button").click(function(){ 
+			var str = $(this).attr('id');
+			strNotPref = delete_prefix(str, "action-block-");
+			$.ajax({
+			  type: "POST",
+			  url: "listusers/lock/"+strNotPref,
+			  success: function(data){
+				if(data) {
+					if (data.status == "lock"){
+						$("#status-activity-"+strNotPref).html("Блокирован");
+						$("#action-block-"+strNotPref).hide();
+						$("#action-block-unlock-"+strNotPref).show();
+					} else{
+						$("#status-activity-"+strNotPref).html("Активен");
+					}
+				} 
+			  }
+			}); 
+		});	
+		$(".action-button-unlock").click(function(){ 
+			var str = $(this).attr('id');
+			strNotPref = delete_prefix(str, "action-block-unlock-");
+			$.ajax({
+			  type: "POST",
+			  url: "listusers/unlock/"+strNotPref,
+			  success: function(data){
+				if(data) {
+					if (data.status == "unlock"){
+						$("#status-activity-"+strNotPref).html("Активен");
+						$("#action-block-unlock-"+strNotPref).hide();
+						$("#action-block-"+strNotPref).show();
+					} else{
+						$("#status-activity-"+strNotPref).html("Блокирован");	
+					}
+				} 
+			  }
+			});
+		});
+		
+		function delete_prefix(id, prefix){
+			var strId = id.toString();
+			return strId.substring(prefix.length, strId.length);
+		}
+	</script>
+{{end}}

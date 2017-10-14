@@ -1,0 +1,126 @@
+{{define "categoresList"}}
+	<br />
+	<div>
+	 <link rel="stylesheet" href="{{.UrlCss}}/jquery.modal.css" type="text/css" media="screen" />
+	 <script src="{{.UrlJs}}/jquery.modal.min.js" type="text/javascript" charset="utf-8"></script>
+ 
+		<div id="form-photo" class="form-photo">
+			<!--div id="close-button" class="close-button right-modal"></div-->
+			{{template "fileUpload" .}}
+			<script type="text/javascript" charset="utf-8">
+				Main.UploaderImg.Init({
+							      ImgDomain: $("#list-images"), 
+								  InputFile: $("#file-input"),
+								  DomainFiles: $("#domain-list-images"),
+								  CountImageLimite: {{.CountIco}},
+								  MaxSizeImgInKb: 8192,
+								  PathServerLoad: "listcategores/uploadajaximg",
+								  PathStaticImg: "{{.UrlImgIco}}/static"
+								});
+			</script>
+			<input type="hidden" id="idCat" name="idCat" value="" />
+			<!--div class="button-place">
+				<input type="button" class="ok-button" value="Сохранить" />
+				<input type="button" class="cancel-button" value="Отмена" />
+			</div-->
+			<input type="hidden" id="UrlRemovePhoto" value="{{.UrlRemovePhoto}}" />
+		</div>
+	<table>
+	<tr>
+		<th>Инфографика</th>
+		<th>Название</th>
+		<th>Действие</th>
+	</tr>
+	{{range .ListFirstLavelCategory}}
+		<tr>
+			<td>
+				<img class="ico-image" src="{{.IcoFullPath}}" />
+				<input type="hidden" value="{{.IcoFileName}}" />
+				<div class="edit-block">
+					<span id="edit-ico-{{.Id}}" class="edit-ico link">Редактировать</span>
+				</div>
+			</td>
+			<td>
+				<span id="label-name-{{.Id}}" class="label-name">{{.Name}}</span>
+				<input type="text" id="edit-name-{{.Id}}" value="{{.Name}}" style="display:none;"/>
+				<input type="button" id="ok-category-{{.Id}}" class="ok-category" value="Сохранить" style="display:none;"/>
+			</td>
+			<td><input type="button" value="Редактировать" id="edit-action-{{.Id}}" class="edit-action" /></td>
+			<td>
+				<span id="expand-second-lavel-{{.Id}}" class="link expand-second">Развернуть</span>&nbsp;
+				<div class="podtree">
+					{{range .ListSecondLavelCategory }}		
+						<ul>
+							<li>
+								{{.Name}}	
+							</li>
+						</ul>
+					{{end}}	
+				</div>
+				<a href="{{.Id}}">Удалить</a>
+			</td>
+		</tr>
+	{{end}}
+	</table>
+	</div>
+	<script>
+		$(document).ready(function(){
+			$('#form-photo').hide();
+		});
+	  	$('.edit-ico').click(function(event) {
+		  var imgDomain = $("#list-images");
+		  var errorList = $("#upload-list-errors");
+		  Main.UploaderImg.CleanImgDomain(imgDomain, errorList);
+		  var idCat = deletePrefix($(this).attr("id"), "edit-ico-");
+		  var request = $.ajax({
+	        url: "listcategores/geticon/" + idCat,
+	        type: 'POST',
+	        cache: false,
+	        contentType: false,
+	        processData: false,
+		  });
+		  request.done(function( msg ) {
+			Main.UploaderImg.ImgParams.idCatalog = idCat;
+			Main.UploaderImg.InitImgesInDomain({ ImgDomain: imgDomain, 
+												 ErrorList: errorList,
+												 UrlOneImg: msg.path });
+		  });
+		  $('#idCat').val(idCat);		
+	      $('#form-photo').modal({
+	        escapeClose: true,
+	        clickClose: true,
+	        showClose: true,
+			closeClass: 'icon-remove'
+	      });
+	    });
+	
+		$(".edit-action").click(function() {
+			var id = deletePrefix(this.id, "edit-action-");
+			$("#label-name-"+id).hide();
+			$("#edit-name-"+id).show();
+			$("#ok-category-"+id).show();
+		});
+		$(".ok-category").click(function(){ 
+			var str = $(this).attr('id');
+			idNotPref = deletePrefix(str, "ok-category-");
+			name = $("#edit-name-" + idNotPref).val();	
+			$.ajax({
+			  type: "POST",
+			  url: "listcategores/edit-first",
+			  data: { id: idNotPref, name: name },
+			  success: function(data){
+				if (data.status = "Ok")	{
+					$("#label-name-" + idNotPref).html(name)
+				}
+			  }
+			});
+			$("#edit-name-"+idNotPref).hide();
+			$("#ok-category-"+idNotPref).hide();
+			$("#label-name-"+idNotPref).show();
+		});
+		$(".expand-second").click(function(){
+			alert(this.id);
+		});
+	</script>
+	{{template "footer"}}
+{{end}}

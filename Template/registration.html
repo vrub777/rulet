@@ -1,0 +1,24 @@
+{{define "reg"}}
+	<div>
+		<h1>Регистрация пользователя</h1>
+	</div>
+	<div>
+		<ul>
+			{{range .BasePage.Errors}}
+	            <li> {{.}} </li>
+	        {{end}}
+		</ul>
+	</div>
+    <form action="reg" method="post">
+		<div>Имя</div>
+	    <input type="text" name="name" /><br />
+		<div>Электронная почта</div>
+		<input type="text" name="email" /><br />
+		<div>Пароль</div>
+		<input type="password" name="password" /><br />
+		<div>Повторите пароль</div>
+		<input type="password" name="repeatpassword" /><br />
+	    <input type="submit" name="button" value="Войти" />
+    </form>	
+	{{template "footer"}}
+{{end}}
