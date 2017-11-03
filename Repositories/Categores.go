@@ -16,8 +16,9 @@ func (cat *Categores) GetListFirstCategores() []*m.ViewFirstCategory {
 	defer db.Close()
 
 	categores := []*m.ViewFirstCategory{}
-	rows, err := db.Query(`select id, name, count_request, name_file_ico from catalog."tFirstLavelCategory" 
-						   order by id`)
+	rows, err := db.Query(`select id, name, order_view, count_request, name_file_ico 
+						   from catalog."tFirstLavelCategory" 
+						   order by order_view`)
 
 	if err != nil {
 		panic(err)
@@ -28,7 +29,7 @@ func (cat *Categores) GetListFirstCategores() []*m.ViewFirstCategory {
 	for rows.Next() {
 		category := m.ViewFirstCategory{}
 		// TODO Решить будет Null у IcoPath или нет
-		err = rows.Scan(&category.Id, &category.Name, &countRequest, &icoFileName)
+		err = rows.Scan(&category.Id, &category.Name, &category.Order, &countRequest, &icoFileName)
 		if countRequest.Valid {
 			category.CountRequest = int(countRequest.Int64)
 		}
@@ -49,19 +50,21 @@ func (cat *Categores) GetListSecondCategores(idParent int) []*m.ViewSecondCatego
 	defer db.Close()
 
 	categores := []*m.ViewSecondCategory{}
-	rows, err := db.Query(`select id, name, count_request, id_parent 
+	rows, err := db.Query(`select id, name, count_request, order_view, id_parent 
 						   from catalog."tSecondLavelCategory"
 						   where id_parent = $1	 
-						   order by id`, idParent)
+						   order by order_view`, idParent)
 
 	if err != nil {
 		panic(err)
 	}
 
 	var countRequest sql.NullInt64
+
 	for rows.Next() {
 		category := m.ViewSecondCategory{}
-		err = rows.Scan(&category.Id, &category.Name, &countRequest, &category.IdParent)
+		err = rows.Scan(&category.Id, &category.Name, &countRequest, &category.Order,
+			&category.IdParent)
 		if countRequest.Valid {
 			category.CountRequest = int(countRequest.Int64)
 		}
@@ -74,12 +77,52 @@ func (cat *Categores) GetListSecondCategores(idParent int) []*m.ViewSecondCatego
 	return categores
 }
 
+func (cat *Categores) AddCategory(category m.AddCategoryModel) int {
+	postgre := connect.Postgre{}
+	db := postgre.Open()
+	defer db.Close()
+
+	var newId int
+	var err = db.QueryRow(`insert into catalog."tFirstLavelCategory"(name, order_view) 
+						values ($1, $2) RETURNING id;`, category.Name, category.Order).Scan(&newId)
+
+	if err != nil {
+		return 0
+	}
+
+	return newId
+}
+
+func (cat *Categores) DeleteCategory(id int) {
+	postgre := connect.Postgre{}
+	db := postgre.Open()
+	defer db.Close()
+
+	_, err := db.Exec(`delete from catalog."tFirstLavelCategory" where id = $1`, id)
+
+	if err != nil {
+		panic("Delete query error catalog.tFirstLavelCategory. Exec. \n " + err.Error())
+	}
+}
+
 func (cat *Categores) UpdateFirstCategory(updateModel m.UpdateFirstCategoryModel) {
 	postgre := connect.Postgre{}
 	db := postgre.Open()
 	defer db.Close()
 
-	_, err := db.Exec(`update catalog."tFirstLavelCategory" SET name=$1 where id=$2`,
+	_, err := db.Exec(`update catalog."tFirstLavelCategory" SET name=$1, order_view=$2 where id=$3`,
+		updateModel.Name, updateModel.Order, updateModel.Id)
+	if err != nil {
+		panic("Update query error category.tCategory. Exec. \n " + err.Error())
+	}
+}
+
+func (cat *Categores) UpdateSecondCategory(updateModel m.UpdateSecondCategoryModel) {
+	postgre := connect.Postgre{}
+	db := postgre.Open()
+	defer db.Close()
+
+	_, err := db.Exec(`update catalog."tSecondLavelCategory" SET name=$1 where id=$2`,
 		updateModel.Name, updateModel.Id)
 	if err != nil {
 		panic("Update query error category.tCategory. Exec. \n " + err.Error())

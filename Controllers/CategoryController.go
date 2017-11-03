@@ -21,20 +21,11 @@ type CategoryController struct {
 }
 
 func (cat *CategoryController) ShowListCategory(c *gin.Context) {
-	url := s.URL{}
-	if !cat.isAuth(c.Request) {
-		c.Redirect(http.StatusFound, url.Get404())
-		return
-	}
-	if !cat.isAccess(c.Request) {
-		c.Redirect(http.StatusFound, url.Get404())
-		return
-	}
+	cat.VerifyAccess(c)
 	cat.ShowHead(c, "Список категорий")
-
 	categoryService := s.Categoryzator{}
 	viewCategoryModel := categoryService.GetViewListCategores()
-
+	url := s.URL{}
 	viewListCategory := m.ViewListCategory{
 		UrlJs:                  url.GetFullPathJs(),
 		UrlCss:                 url.GetFullPathCss(),
@@ -48,18 +39,79 @@ func (cat *CategoryController) ShowListCategory(c *gin.Context) {
 	cat.showHtmlWithoutHeaderRR(c.Writer, viewListCategory, "categoresList")
 }
 
+func (cat *CategoryController) AddCategory(c *gin.Context) {
+	cat.VerifyAccess(c)
+
+	name := c.Request.PostFormValue("Name")
+	orderStr := c.Request.PostFormValue("Order")
+
+	order, err := strconv.Atoi(orderStr)
+
+	if err != nil {
+		return
+	}
+
+	categoryService := s.Categoryzator{}
+	categoryModel := m.AddCategoryModel{Name: name, Order: order}
+	categoryService.AddCategory(categoryModel)
+
+	url := s.URL{}
+	c.Redirect(http.StatusFound, url.GetHostNameWithProtocol()+"/listcategores")
+}
+
+func (cat *CategoryController) DeleteCategory(c *gin.Context) {
+	cat.VerifyAccess(c)
+
+	url := s.URL{}
+	idStr := c.Params.ByName("id")
+	id, err := strconv.Atoi(idStr)
+
+	if err != nil {
+		c.Redirect(http.StatusFound, url.GetHostNameWithProtocol()+"/listcategores")
+	}
+
+	categoryService := s.Categoryzator{}
+	categoryService.DeleteCategory(id)
+
+	c.Redirect(http.StatusFound, url.GetHostNameWithProtocol()+"/listcategores")
+}
+
 func (cat *CategoryController) EditCategory(c *gin.Context) {
-	idStr := c.Request.FormValue("id") //c.Params.ByName("id")
+	idStr := c.Request.FormValue("id")
+	id, errConvert := strconv.Atoi(idStr)
+
+	if errConvert != nil {
+		c.JSON(200, gin.H{"status": "", "error": "Некорректные данные клиента"})
+	}
+	name := c.Request.FormValue("name")
+	orderStr := c.Request.FormValue("order")
+
+	order, errConvert := strconv.Atoi(orderStr)
+
+	if errConvert != nil {
+		c.JSON(200, gin.H{"status": "", "error": "Некорректные данные клиента в поле 'порядок в каталоге'"})
+	}
+
+	categoryService := s.Categoryzator{}
+	categoryModel := m.UpdateFirstCategoryModel{Id: id, Name: name, Order: order}
+	categoryService.UpdateFirstCategory(categoryModel)
+
+	c.JSON(200, gin.H{"status": "Ok"})
+}
+
+func (cat *CategoryController) EditSecondCategory(c *gin.Context) {
+	idStr := c.Request.FormValue("id")
 	id, errConvert := strconv.Atoi(idStr)
 
 	fmt.Println(id)
 	if errConvert != nil {
 		c.JSON(200, gin.H{"status": "", "error": "Некорректные данные клиента"})
 	}
-	name := c.Request.FormValue("name") //c.Params.ByName("name")
+
+	name := c.Request.FormValue("name")
 	categoryService := s.Categoryzator{}
-	categoryModel := m.UpdateFirstCategoryModel{Id: id, Name: name}
-	categoryService.UpdateFirstCategory(categoryModel)
+	categoryModel := m.UpdateSecondCategoryModel{Id: id, Name: name}
+	categoryService.UpdateSecondCategory(categoryModel)
 
 	c.JSON(200, gin.H{"status": "Ok"})
 }
@@ -177,6 +229,7 @@ func isNotValidSize(r *multipart.FileHeader) bool {
 	return false
 }
 
+// TODO проверить и убрать, если не нужно
 func (cat *CategoryController) ShowFileUploadPage(c *gin.Context) {
 	url := s.URL{}
 	cat.ShowHead(c, "Загрузка файла")
@@ -186,6 +239,18 @@ func (cat *CategoryController) ShowFileUploadPage(c *gin.Context) {
 		UrlCss: url.GetFullPathCss(),
 	}
 	cat.showHtmlWithoutHeader(c.Writer, viewModel, "fileUpload")
+}
+
+func (cat *CategoryController) VerifyAccess(c *gin.Context) {
+	url := s.URL{}
+	if !cat.isAuth(c.Request) {
+		c.Redirect(http.StatusFound, url.Get404())
+		return
+	}
+	if !cat.isAccess(c.Request) {
+		c.Redirect(http.StatusFound, url.Get404())
+		return
+	}
 }
 
 func (cat *CategoryController) isAccess(req *http.Request) bool {

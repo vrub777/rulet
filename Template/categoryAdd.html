@@ -1,0 +1,14 @@
+{{define "categoryAdd"}}
+	<div>
+		<form method="POST" action="addCategory">
+			<div>Название категории</div>
+			<input type="text" name="Name" />
+			<div>Порядок в каталоге</div>
+			<input type="text" name="Order" />
+			<div class="button-place">
+				<input type="submit" class="ok-button" value="Сохранить" />
+				<input type="button" class="cancel-button" value="Отмена" />
+			</div>
+		</form>
+	</div>
+{{end}}

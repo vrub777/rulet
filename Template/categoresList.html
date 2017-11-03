@@ -2,10 +2,10 @@
 	<br />
 	<div>
 	 <link rel="stylesheet" href="{{.UrlCss}}/jquery.modal.css" type="text/css" media="screen" />
+	 <link rel="stylesheet" href="{{.UrlCss}}/admin.css" type="text/css" media="screen" />
 	 <script src="{{.UrlJs}}/jquery.modal.min.js" type="text/javascript" charset="utf-8"></script>
  
 		<div id="form-photo" class="form-photo">
-			<!--div id="close-button" class="close-button right-modal"></div-->
 			{{template "fileUpload" .}}
 			<script type="text/javascript" charset="utf-8">
 				Main.UploaderImg.Init({
@@ -19,16 +19,19 @@
 								});
 			</script>
 			<input type="hidden" id="idCat" name="idCat" value="" />
-			<!--div class="button-place">
-				<input type="button" class="ok-button" value="Сохранить" />
-				<input type="button" class="cancel-button" value="Отмена" />
-			</div-->
 			<input type="hidden" id="UrlRemovePhoto" value="{{.UrlRemovePhoto}}" />
 		</div>
+	<div>
+		<input type="button" id="addCategory" value="Добавить категорию" />
+		<div id="categoryAddForm" class="novisible categoryAddForm">
+			{{ template "categoryAdd" }}
+		</div>
+	</div>
 	<table>
 	<tr>
 		<th>Инфографика</th>
 		<th>Название</th>
+		<th>Порядок в каталоге</th>
 		<th>Действие</th>
 	</tr>
 	{{range .ListFirstLavelCategory}}
@@ -43,21 +46,43 @@
 			<td>
 				<span id="label-name-{{.Id}}" class="label-name">{{.Name}}</span>
 				<input type="text" id="edit-name-{{.Id}}" value="{{.Name}}" style="display:none;"/>
-				<input type="button" id="ok-category-{{.Id}}" class="ok-category" value="Сохранить" style="display:none;"/>
 			</td>
-			<td><input type="button" value="Редактировать" id="edit-action-{{.Id}}" class="edit-action" /></td>
 			<td>
-				<span id="expand-second-lavel-{{.Id}}" class="link expand-second">Развернуть</span>&nbsp;
+				<span id="label-order-{{.Id}}" class="label-order">{{.Order}}</span>
+				<input type="text" id="edit-order-{{.Id}}" value="{{.Order}}" style="display:none;"/>
+			</td>
+			<td>
+				<input type="button" id="ok-category-{{.Id}}" class="ok-category" value="Сохранить" style="display:none;"/>
+				<input type="button" value="Редактировать" id="edit-action-{{.Id}}" class="edit-action" />
+			</td>
+			<td>
+				<span id="expand-second-lavel-{{.Id}}" class="link expand-second">Развернуть</span> 
+				<span>(подкатегорий: {{.CountSecondLevel}} / количество заявок: {{.CountRequest}})</span>&nbsp;
 				<div class="podtree">
-					{{range .ListSecondLavelCategory }}		
-						<ul>
-							<li>
-								{{.Name}}	
-							</li>
+					<div id="second-lavel-block-{{.Id}}" class="novisible">
+						<ul class="second-lavel-category">
+							{{range .ListSecondLavelCategory }}		
+								<li>
+									<table>
+										<tr>
+											<td id="visible-second-lavel-field-{{.Id}}">{{.Name}}</td>
+											<td id="edit-second-lavel-field-{{.Id}}" class="novisible">
+												<input id="edit-field-{{.Id}}" type="text" value="{{.Name}}"/>
+											</td>
+											<td><input type="button" value="Редактировать" 
+												id="edit-action-secondlavel-{{.Id}}" class="edit-action-secondlavel"/></td>
+										</tr>
+									</table>
+								</li>
+							{{end}}	
 						</ul>
-					{{end}}	
+					</div>
 				</div>
-				<a href="{{.Id}}">Удалить</a>
+			</td>
+			<td>
+				<form method="POST" action="deleteCategory/{{.Id}}">
+					<input class="deleteCategory" type="submit" value="Удалить" name="DeleteCategory" />
+				</form>
 			</td>
 		</tr>
 	{{end}}
@@ -97,29 +122,82 @@
 		$(".edit-action").click(function() {
 			var id = deletePrefix(this.id, "edit-action-");
 			$("#label-name-"+id).hide();
+			$("#label-order-"+id).hide();
 			$("#edit-name-"+id).show();
+			$("#edit-order-"+id).show();
 			$("#ok-category-"+id).show();
 		});
 		$(".ok-category").click(function(){ 
 			var str = $(this).attr('id');
 			idNotPref = deletePrefix(str, "ok-category-");
 			name = $("#edit-name-" + idNotPref).val();	
+			order = $("#edit-order-" + idNotPref).val();	
 			$.ajax({
 			  type: "POST",
 			  url: "listcategores/edit-first",
-			  data: { id: idNotPref, name: name },
+			  data: { id: idNotPref, name: name, order: order },
 			  success: function(data){
 				if (data.status = "Ok")	{
 					$("#label-name-" + idNotPref).html(name)
+					$("#label-order-" + idNotPref).html(order)
 				}
 			  }
 			});
 			$("#edit-name-"+idNotPref).hide();
+			$("#edit-order-"+idNotPref).hide();
 			$("#ok-category-"+idNotPref).hide();
 			$("#label-name-"+idNotPref).show();
+			$("#label-order-"+idNotPref).show();
 		});
 		$(".expand-second").click(function(){
-			alert(this.id);
+			id = deletePrefix(this.id, "expand-second-lavel-");
+			blockSecondLavel = $("#second-lavel-block-" + id);
+			
+			if (blockSecondLavel.hasClass("novisible")){
+				blockSecondLavel.show();
+				blockSecondLavel.removeClass("novisible");
+			} else {
+				blockSecondLavel.hide();
+				blockSecondLavel.addClass("novisible");
+			}	
+		});
+		$(".edit-action-secondlavel").click(function(){
+			id = deletePrefix(this.id, "edit-action-secondlavel-");
+			editFieldBlock = $("#edit-second-lavel-field-" + id);
+			editField = $("#edit-field-"+id);
+			visibleFieldBlock= $("#visible-second-lavel-field-" + id);
+			
+			if (editFieldBlock.hasClass("novisible")){
+				$(this).attr("value", "Ok");
+				visibleFieldBlock.addClass("novisible");
+				editFieldBlock.removeClass("novisible");
+			} else {
+				nameSecondLavel = editField.val();
+				$(this).attr("value", "Редактировать");
+				editFieldBlock.addClass("novisible");
+				visibleFieldBlock.removeClass("novisible");
+				
+				$.ajax({
+				  type: "POST",
+				  url: "listcategores/edit-second",
+				  data: { id: id, name: nameSecondLavel },
+				  success: function(data){
+					if (data.status = "Ok")	{
+						$("#visible-second-lavel-field-" + id).html(nameSecondLavel)
+					}
+				  }
+				});
+			}
+		});
+		$("#addCategory").click(function(){
+			$("#categoryAddForm").removeClass("novisible");
+		});
+		$(".deleteCategory").click(function(){
+			var isReady = confirm("Вы уверены, что хотите удалить категорию?");
+			
+			if(!isReady) {
+				return false;
+			}
 		});
 	</script>
 	{{template "footer"}}

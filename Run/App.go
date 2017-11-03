@@ -18,7 +18,7 @@ func (s *AppService) Run() {
 	errorc := Controller.ErrorsController{}
 	userc := Controller.UserController{}
 	categoryc := Controller.CategoryController{}
-	//headc := Controller.HeadController{}
+	apicategoryc := Controller.APICategoryController{}
 
 	router.GET("/auth", ac.ShowSimpleAuthUser)
 	router.GET("/auth/:backURL", ac.ShowSimpleAuthUser)
@@ -37,14 +37,18 @@ func (s *AppService) Run() {
 
 	router.GET("/listcategores", categoryc.ShowListCategory)
 	router.GET("/showfileupload", categoryc.ShowFileUploadPage)
-	//router.POST("/listcategores/edit-first/:id/:name", categoryc.EditCategory)
+	router.POST("/addCategory", categoryc.AddCategory)
+	router.POST("/deleteCategory/:id", categoryc.DeleteCategory)
 	router.POST("/listcategores/edit-first", categoryc.EditCategory)
-	//router.POST("/listcategores/uploadimg", categoryc.UploadImg)
+	router.POST("/listcategores/edit-second", categoryc.EditSecondCategory)
 	router.POST("/listcategores/geticon/:idCat", categoryc.GetUploadIconJson)
 	router.POST("/listcategores/uploadajaximg/:idCat", categoryc.UploadAjaxImg)
 	router.POST("/listcategores/removeimgcategory/:idImg", categoryc.RemoveImg)
 
-	//router.GET("/blockhead", headc.ShowByHttpHead)
+	// API на JSON
+	router.GET("/api/getlistcategores", apicategoryc.GetListCategores)
+	router.GET("/api/getlistsecondcategores/:idparent", apicategoryc.GetListSecondCategoresById)
+
 	router.NotFound404(errorc.E404)
 
 	router.Run(":8090")
